@@ -1,6 +1,5 @@
 const lineByLine = require("n-readlines");
 const GameReport = require("./gameReport");
-const 
 
 class GameLogService {
   logPath = "";
@@ -30,7 +29,9 @@ class GameLogService {
         }
       } else {
         gameStart = line.includes("InitGame:");
-        gameReport = new GameReport(reports.length + 1);
+        if (gameStart) {
+          gameReport = new GameReport(reports.length + 1);
+        }
       }
     }
     return reports;
@@ -61,8 +62,6 @@ class GameLogService {
   isEndOfGameLine = (line) => {
     return line.includes("ShutdownGame");
   };
-
-  
 
   getKillMeans(line) {
     return line.match(/by (\w{1,})/)[this.CAUSE_OF_DEATH_POS];

@@ -3,28 +3,37 @@ class GameReport {
   kills;
   players;
   killsByMeans;
+  totalKills;
 
   constructor(gameNumber) {
     this.gameNumber = gameNumber;
-    kills = {};
-    players = [];
-    killsByMeans = {};
+    this.kills = {};
+    this.players = [];
+    this.killsByMeans = {};
+    this.totalKills = 0;
   }
 
   addKillReport(killer, killed) {
+    let penality = 0;
     if (this.worldIsTheKiller(killer)) {
-      this.kills[killed] = (this.kills[killed] || 0) - 1;
+      penality = 1;
     } else {
       this.kills[killer] = (this.kills[killer] || 0) + 1;
-      this.setPlayer(killer);
+      this.addPlayer(killer);
     }
-    this.setPlayer(killed);
+    this.kills[killed] = (this.kills[killed] || 0) - penality;
+    this.addPlayer(killed);
+    this.updateTotalKills();
   }
 
   addPlayer(player) {
     if (!this.players.includes(player)) {
       this.players.push(player);
     }
+  }
+
+  updateTotalKills() {
+    this.totalKills++;
   }
 
   addKillMeans(killMeans) {
@@ -38,20 +47,13 @@ class GameReport {
   getFinalReport() {
     return {
       [`game_${this.gameNumber}`]: {
-        total_kills: this.getTotalKills(),
+        total_kills: this.totalKills,
         players: this.players,
         kills: this.kills,
         kills_by_means: this.killsByMeans,
       },
     };
   }
-
-  getTotalKills = () => {
-    return Object.values(this.kills).reduce(
-      (val, nextVal) => val + (nextVal > 0 ? nextVal : nextVal * -1),
-      0
-    );
-  };
 }
 
 module.exports = GameReport;
