@@ -13,6 +13,7 @@ class GameLogService {
     let totalKills;
     let players;
     let line;
+    let killsByMeans;
     const liner = new lineByLine(this.logPath);
     while ((line = liner.next())) {
       line = line.toString("ascii");
@@ -31,6 +32,8 @@ class GameLogService {
           if (!players.includes(killed)) {
             players.push(killed);
           }
+          const causeOfDeath = this.getCauseOfDeath(line);
+          killsByMeans[causeOfDeath] = (killsByMeans[causeOfDeath] || 0) + 1;
         } else if (this.isEndOfGameLine(line)) {
           gameStart = false;
           reports.push({
@@ -38,6 +41,7 @@ class GameLogService {
               total_kills: this.getTotalKills(kills),
               players,
               kills,
+              kills_by_means: killsByMeans,
             },
           });
         }
@@ -46,6 +50,7 @@ class GameLogService {
         kills = {};
         totalKills = 0;
         players = [];
+        killsByMeans = {};
       }
     }
     return reports;
@@ -84,8 +89,16 @@ class GameLogService {
   };
 
   getTotalKills = (kills) => {
-    return Object.values(kills).reduce((val, nextVal) => val + nextVal, 0);
+    return Object.values(kills).reduce(
+      (val, nextVal) => val + (nextVal > 0 ? nextVal : nextVal * -1),
+      0
+    );
   };
+
+  getCauseOfDeath(line) {
+    const CAUSE_OF_DEATH_POS = 1;
+    return line.match(/by (\w{1,})/)[CAUSE_OF_DEATH_POS];
+  }
 }
 
 module.exports = GameLogService;
