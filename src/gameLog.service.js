@@ -7,10 +7,8 @@ class GameLogService {
   }
 
   getAllGameReports = () => {
-    const self = this;
     const reports = [];
     let gameStart = false;
-    //let gameReport;
     let kills;
     let totalKills;
     let players;
@@ -19,32 +17,31 @@ class GameLogService {
     while ((line = liner.next())) {
       line = line.toString("ascii");
       if (gameStart) {
-        if (self.isKillLogLine(line)) {
-          const killer = self.getKiller(line);
-          const killed = self.getKilled(line);
-          if (self.worldIsTheKiller(killer)) {
+        if (this.isKillLogLine(line)) {
+          const killer = this.getKiller(line);
+          const killed = this.getKilled(line);
+          if (this.worldIsTheKiller(killer)) {
             kills[killed] = (kills[killed] || 0) - 1;
           } else {
             kills[killer] = (kills[killer] || 0) + 1;
+            if (!players.includes(killer)) {
+              players.push(killer);
+            }
           }
-          if (!players.includes(killer)) {
-            players.push(killer);
+          if (!players.includes(killed)) {
+            players.push(killed);
           }
-          if (!players.includes(killer)) {
-            players.push(killer);
-          }
-        } else if (self.isEndOfGameLine(line)) {
+        } else if (this.isEndOfGameLine(line)) {
           gameStart = false;
           reports.push({
             [`game_${reports.length + 1}`]: {
-              total_kills: self.getTotalKills(kills),
+              total_kills: this.getTotalKills(kills),
               players,
               kills,
             },
           });
         }
       } else {
-        //gameReport = this.getEmptyGameReport();
         gameStart = line.includes("InitGame:");
         kills = {};
         totalKills = 0;

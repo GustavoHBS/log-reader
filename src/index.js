@@ -3,18 +3,17 @@ const fs = require("fs");
 const path = require("path");
 const GameLogService = require("./gameLog.service");
 
-// const logDir = path.join("logs");
-// console.log(logDir);
-// fs.readdirSync(logDir).forEach((file) => {
-//   console.log(file);
-// });
 const exec = async () => {
-  const teste = path.join("logs", "teste.log");
-  console.log(teste);
-  const gameLog = new GameLogService(teste);
-
-  const x = await gameLog.getAllGameReports();
-  console.log(JSON.stringify(x));
+  const logDir = path.join("logs");
+  fs.readdirSync(logDir).forEach((file) => {
+    console.log(logDir + "/file");
+    const gameLog = new GameLogService(`${logDir}/${file}`);
+    const log = gameLog.getAllGameReports();
+    console.log(
+      `FILE: ${file} -------------------------`,
+      JSON.stringify(log, null, 4)
+    );
+  });
 };
 
 exec();
