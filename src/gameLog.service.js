@@ -1,7 +1,13 @@
 const lineByLine = require("n-readlines");
+const GameReport = require("./gameReport");
+const 
 
 class GameLogService {
   logPath = "";
+  KILLER_POSITION = 1;
+  KILLED_POSITION = 1;
+  CAUSE_OF_DEATH_POS = 1;
+
   constructor(logPath) {
     this.logPath = logPath;
   }
@@ -9,48 +15,22 @@ class GameLogService {
   getAllGameReports = () => {
     const reports = [];
     let gameStart = false;
-    let kills;
-    let totalKills;
-    let players;
     let line;
-    let killsByMeans;
+    let gameReport;
     const liner = new lineByLine(this.logPath);
     while ((line = liner.next())) {
       line = line.toString("ascii");
       if (gameStart) {
         if (this.isKillLogLine(line)) {
-          const killer = this.getKiller(line);
-          const killed = this.getKilled(line);
-          if (this.worldIsTheKiller(killer)) {
-            kills[killed] = (kills[killed] || 0) - 1;
-          } else {
-            kills[killer] = (kills[killer] || 0) + 1;
-            if (!players.includes(killer)) {
-              players.push(killer);
-            }
-          }
-          if (!players.includes(killed)) {
-            players.push(killed);
-          }
-          const causeOfDeath = this.getCauseOfDeath(line);
-          killsByMeans[causeOfDeath] = (killsByMeans[causeOfDeath] || 0) + 1;
+          gameReport.addKillReport(this.getKiller(line), this.getKilled(line));
+          gameReport.addKillMeans(this.getKillMeans(line));
         } else if (this.isEndOfGameLine(line)) {
           gameStart = false;
-          reports.push({
-            [`game_${reports.length + 1}`]: {
-              total_kills: this.getTotalKills(kills),
-              players,
-              kills,
-              kills_by_means: killsByMeans,
-            },
-          });
+          reports.push(gameReport.getFinalReport());
         }
       } else {
         gameStart = line.includes("InitGame:");
-        kills = {};
-        totalKills = 0;
-        players = [];
-        killsByMeans = {};
+        gameReport = new GameReport(reports.length + 1);
       }
     }
     return reports;
@@ -71,33 +51,21 @@ class GameLogService {
   };
 
   getKiller = (line) => {
-    const KILLER_POSITION = 1;
-    return line.match(/\d{1,}:\s([<>\D]{1,})\skilled/)[KILLER_POSITION];
+    return line.match(/\d{1,}:\s([<>\D]{1,})\skilled/)[this.KILLER_POSITION];
   };
 
   getKilled = (line) => {
-    const KILLED_POSITION = 1;
-    return line.match(/killed (\w{1,})/)[KILLED_POSITION];
-  };
-
-  worldIsTheKiller = (killer) => {
-    return killer === "<world>";
+    return line.match(/killed (\w{1,})/)[this.KILLED_POSITION];
   };
 
   isEndOfGameLine = (line) => {
     return line.includes("ShutdownGame");
   };
 
-  getTotalKills = (kills) => {
-    return Object.values(kills).reduce(
-      (val, nextVal) => val + (nextVal > 0 ? nextVal : nextVal * -1),
-      0
-    );
-  };
+  
 
-  getCauseOfDeath(line) {
-    const CAUSE_OF_DEATH_POS = 1;
-    return line.match(/by (\w{1,})/)[CAUSE_OF_DEATH_POS];
+  getKillMeans(line) {
+    return line.match(/by (\w{1,})/)[this.CAUSE_OF_DEATH_POS];
   }
 }
 
