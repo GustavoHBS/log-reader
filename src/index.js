@@ -14,7 +14,7 @@ const exec = async () => {
   const gameLog = new GameLogService(teste);
 
   const x = await gameLog.getAllGameReports();
-  console.log(x);
+  console.log(JSON.stringify(x));
 };
 
 exec();

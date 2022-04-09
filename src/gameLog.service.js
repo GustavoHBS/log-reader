@@ -1,4 +1,4 @@
-const lineReader = require("line-reader");
+const lineByLine = require("n-readlines");
 
 class GameLogService {
   logPath = "";
@@ -8,54 +8,50 @@ class GameLogService {
 
   getAllGameReports = () => {
     const self = this;
-    return new Promise((resolve) => {
-      const reports = [];
-      let gameStart = false;
-      //let gameReport;
-      let kills;
-      let totalKills;
-      let players;
-      lineReader.open("./logs/teste.log", function (reader) {
-        if (reader.hasNextLine()) {
-          reader.nextLine(function (line) {
-            if (gameStart) {
-              if (self.isKillLogLine(line)) {
-                const killer = self.getKiller(line);
-                const killed = self.getKilled(line);
-                if (self.worldIsTheKiller(killer)) {
-                  kills[killed] = (kills[killed] || 0) - 1;
-                } else {
-                  kills[killer] = (kills[killer] || 0) + 1;
-                }
-                if (!players.includes(killer)) {
-                  players.push(killer);
-                }
-                if (!players.includes(killer)) {
-                  players.push(killer);
-                }
-              } else if (self.isEndOfGameLine(line)) {
-                gameStart = false;
-                reports.push({
-                  [`game_${reports.length + 1}`]: {
-                    total_kills: self.getTotalKills(kills),
-                    players,
-                    kills,
-                  },
-                });
-              }
-            } else {
-              //gameReport = this.getEmptyGameReport();
-              gameStart = line.includes("InitGame:");
-              kills = {};
-              totalKills = 0;
-              players = [];
-            }
+    const reports = [];
+    let gameStart = false;
+    //let gameReport;
+    let kills;
+    let totalKills;
+    let players;
+    let line;
+    const liner = new lineByLine(this.logPath);
+    while ((line = liner.next())) {
+      line = line.toString("ascii");
+      if (gameStart) {
+        if (self.isKillLogLine(line)) {
+          const killer = self.getKiller(line);
+          const killed = self.getKilled(line);
+          if (self.worldIsTheKiller(killer)) {
+            kills[killed] = (kills[killed] || 0) - 1;
+          } else {
+            kills[killer] = (kills[killer] || 0) + 1;
+          }
+          if (!players.includes(killer)) {
+            players.push(killer);
+          }
+          if (!players.includes(killer)) {
+            players.push(killer);
+          }
+        } else if (self.isEndOfGameLine(line)) {
+          gameStart = false;
+          reports.push({
+            [`game_${reports.length + 1}`]: {
+              total_kills: self.getTotalKills(kills),
+              players,
+              kills,
+            },
           });
-        } else {
-          resolve(reports);
         }
-      });
-    });
+      } else {
+        //gameReport = this.getEmptyGameReport();
+        gameStart = line.includes("InitGame:");
+        kills = {};
+        totalKills = 0;
+        players = [];
+      }
+    }
+    return reports;
   };
 
   getEmptyGameReport = () => {
